@@ -4,15 +4,15 @@ import numpy as np
 def nothing():
     pass
 
-def initTrackbars():
-    cv.namedWindow("threshold")
-    cv.resizeWindow("threshold", 360, 240)
-    cv.createTrackbar("thres_min", "threshold", 0, 255, nothing)
-    cv.createTrackbar("thres_max", "threshold", 255, 255, nothing)
+def initTrackbars(number):
+    cv.namedWindow("threshold{number}")
+    cv.resizeWindow("threshold{number}", 360, 240)
+    cv.createTrackbar("thres_min", "threshold{number}", 0, 255, nothing)
+    cv.createTrackbar("thres_max", "threshold{number}", 255, 255, nothing)
 
-def valueTrackbars():
-    thres_min = cv.getTrackbarPos("thres_min", "threshold")
-    thres_max = cv.getTrackbarPos("thres_max", "threshold")
+def valueTrackbars(number):
+    thres_min = cv.getTrackbarPos("thres_min", "threshold{number}")
+    thres_max = cv.getTrackbarPos("thres_max", "threshold{number}")
     return [thres_min, thres_max]
 
 def biggestContour(contours):

@@ -3,8 +3,8 @@ import numpy as np
 import scanFunctions as sf
 
 ################################
-path = None
-Webcam = True
+path = "2.jpg"
+Webcam = False
 height = 640
 width = 480
 cap = cv.VideoCapture(0)
@@ -13,7 +13,8 @@ cap.set(4, height)
 cap.set(10, 150)
 #################################
 
-sf.initTrackbars()
+sf.initTrackbars(1)
+sf.initTrackbars(2)
 count = 0
 
 while True:
@@ -27,7 +28,7 @@ while True:
     img = cv.resize(img, (width, height))
     img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY) 
     img_blur = cv.GaussianBlur(img_gray, (5, 5), 1)
-    thres = sf.valueTrackbars()
+    thres = sf.valueTrackbars(1)
     img_thres = cv.Canny(img_blur, thres[0], thres[1])
     kernel = np.ones((5, 5))
     img_dilate = cv.dilate(img_thres, kernel, iterations=2)
@@ -60,10 +61,35 @@ while True:
 
         imgs = ([img, img_gray, img_thres, img_contours],
             [img_big_contour, img_warpColored, img_warpGray, img_warpthres])
+        
+        img_warp_canny = cv.Canny(img_warpGray,50 , 150)
+        img_warp_canny_rio = img_warp_canny[100:, 80:]
+        imgWarpCanntRio = img_warp_canny_rio.copy()
+        cv.imshow("warp canny rio", img_warp_canny_rio)
+        contours_warp, _ = cv.findContours(img_warp_canny_rio, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+        vaild_contours = []
+        for cnt in contours_warp:
+            peri = cv.arcLength(cnt, True)
+            approx = cv.approxPolyDP(cnt, 0.02 * peri, True)
+            if approx.shape[0] > 7:
+                vaild_contours.append(cnt)
+        vaild_centers = []
+        vaild_radius = []
+        for cnt in vaild_contours:
+            cv.drawContours(imgWarpCanntRio, cnt, -1, (0, 255, 0), 10)
+            ((x, y), radius) = cv.minEnclosingCircle(cnt)
+            vaild_centers.append([int(x), int(y)])
+            vaild_radius.append(int(radius))
+            
+        cv.imshow("contours2", imgWarpCanntRio)
+        print(vaild_centers)            
     else:
         imgs = ([img, img_gray, img_thres, img_contours],[img_blank, img_blank, img_blank, img_blank])
     labels = [["oringinal", "gray", "thres", "contours"], 
                    ["biggest", "warp colored", "warp gray", "warp thres"]]
     stackedImages = sf.stackImages(0.5, imgs, labels)
+    
+            
     cv.imshow("stacked images", stackedImages)
+    
     cv.waitKey(1)

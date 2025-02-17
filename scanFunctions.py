@@ -4,16 +4,43 @@ import numpy as np
 def nothing():
     pass
 
-def initTrackbars(number):
-    cv.namedWindow("threshold{number}")
-    cv.resizeWindow("threshold{number}", 360, 240)
-    cv.createTrackbar("thres_min", "threshold{number}", 0, 255, nothing)
-    cv.createTrackbar("thres_max", "threshold{number}", 255, 255, nothing)
+def initTrackbars(window_info):
+    """
+    初始化多个窗口和对应的滑动条。
 
-def valueTrackbars(number):
-    thres_min = cv.getTrackbarPos("thres_min", "threshold{number}")
-    thres_max = cv.getTrackbarPos("thres_max", "threshold{number}")
-    return [thres_min, thres_max]
+    :param window_info: 一个列表，每个元素是一个字典，包含窗口名称和滑动条信息。
+                        滑动条信息是一个列表，每个元素是一个元组，包含滑动条名称、初始值、最大值。
+    """
+    for info in window_info:
+        window_name = info["window_name"]
+        trackbars = info["trackbars"]
+        # 创建窗口
+        cv.namedWindow(window_name)
+        # 调整窗口大小
+        cv.resizeWindow(window_name, 360, 240)
+        for trackbar_name, initial_value, max_value in trackbars:
+            # 创建滑动条
+            cv.createTrackbar(trackbar_name, window_name, initial_value, max_value, nothing)
+
+def valueTrackbars(window_info):
+    """
+    从多个窗口中获取滑动条的值。
+
+    :param window_info: 一个列表，每个元素是一个字典，包含窗口名称和滑动条信息。
+                        滑动条信息是一个列表，每个元素是一个字符串，表示滑动条名称。
+    :return: 一个字典，键为窗口名称，值为该窗口中滑动条的值组成的列表。
+    """
+    result = {}
+    for info in window_info:
+        window_name = info["window_name"]
+        trackbars = info["trackbars"]
+        values = []
+        for trackbar_name in trackbars:
+            value = cv.getTrackbarPos(trackbar_name, window_name)
+            values.append(value)
+        result[window_name] = values
+    return result
+
 
 def biggestContour(contours):
     max_area = 0
@@ -45,7 +72,7 @@ def reorder(myPoints):
     myPointsNew[1] = myPoints[np.argmin(diff)]
     myPointsNew[2] = myPoints[np.argmax(diff)]
     return myPointsNew
-    
+
 def stackImages(scale, imgArray, labels=[]):
     rows = len(imgArray)
     cols = len(imgArray[0])
@@ -88,3 +115,12 @@ def stackImages(scale, imgArray, labels=[]):
                 cv.rectangle(ver, (c*eachImgWidth, eachImgHeight*d), (c*eachImgWidth+len(labels[d][c])*13+27, 30+eachImgHeight*d), (255, 255, 255), cv.FILLED) 
                 cv.putText(ver, labels[d][c], (eachImgWidth*c+10, eachImgHeight*d+20), cv.FONT_HERSHEY_COMPLEX, 0.7, (255, 0, 255), 2)
     return ver
+
+def spiltboxs(img):
+    rows = np.vsplit(img, 7)
+    boxes = []
+    for r in rows:
+        cols = np.hsplit(r, 5)
+        for box in cols:
+            boxes.append(box)
+    return boxes

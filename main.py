@@ -135,11 +135,11 @@ while True:
         # 调整裁剪后图像的大小
         img_warpColored = cv.resize(img_warpColored, (width, height))
 
-        # 裁剪透视变换后图像的感兴趣区域
+        # 裁剪透视变换后图像的感兴趣区域用来标记
         img_warp_rio = img_warpColored[120:580, 120:442]
         # 调整感兴趣区域的大小
         img_warp_rio = cv.resize(img_warp_rio, (490,490))
-        # 将感兴趣区域转换为灰度图
+        # 将透视图转换为灰度图
         img_warpGray = cv.cvtColor(img_warpColored, cv.COLOR_BGR2GRAY)
         # 获取threshold2窗口的滑动条值
         thres_warp = result["threshold2"]

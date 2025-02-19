@@ -2,6 +2,10 @@ import cv2 as cv
 import numpy as np
 
 def nothing():
+    """
+    空函数，用于OpenCV滑动条的回调函数。
+    当滑动条的值发生变化时，调用此函数，但不执行任何操作。
+    """
     pass
 
 def initTrackbars(window_info):
@@ -19,7 +23,7 @@ def initTrackbars(window_info):
         # 调整窗口大小
         cv.resizeWindow(window_name, 360, 240)
         for trackbar_name, initial_value, max_value in trackbars:
-            # 创建滑动条
+            # 创建滑动条，回调函数为nothing
             cv.createTrackbar(trackbar_name, window_name, initial_value, max_value, nothing)
 
 def valueTrackbars(window_info):
@@ -36,26 +40,45 @@ def valueTrackbars(window_info):
         trackbars = info["trackbars"]
         values = []
         for trackbar_name in trackbars:
+            # 获取滑动条的当前值
             value = cv.getTrackbarPos(trackbar_name, window_name)
             values.append(value)
         result[window_name] = values
     return result
 
-
 def biggestContour(contours):
+    """
+    从给定的轮廓列表中找到最大的四边形轮廓。
+
+    :param contours: 轮廓列表，每个轮廓是一个由点组成的数组。
+    :return: 最大四边形轮廓的点数组和其面积。
+    """
     max_area = 0
     biggest = np.array([])
     for cnt in contours:
+        # 计算当前轮廓的面积
         area = cv.contourArea(cnt)
         if area > 5000:
+            # 计算轮廓的周长
             peri = cv.arcLength(cnt, True)
+            # 对轮廓进行多边形逼近
             approx = cv.approxPolyDP(cnt, 0.02 * peri, True)
             if area > max_area and len(approx) == 4:
+                # 更新最大轮廓和最大面积
                 biggest = approx
                 max_area = area
     return biggest, max_area
 
 def drawRectangle(img, biggest, thickness):
+    """
+    在图像上绘制一个由四个点定义的矩形。
+
+    :param img: 要绘制矩形的图像。
+    :param biggest: 矩形的四个顶点，形状为 (4, 1, 2) 的数组。
+    :param thickness: 矩形边框的厚度。
+    :return: 绘制了矩形的图像。
+    """
+    # 绘制矩形的四条边
     cv.line(img, (biggest[0][0][0], biggest[0][0][1]), (biggest[1][0][0], biggest[1][0][1]), (0, 255, 0), thickness)
     cv.line(img, (biggest[0][0][0], biggest[0][0][1]), (biggest[2][0][0], biggest[2][0][1]), (0, 255, 0), thickness)
     cv.line(img, (biggest[3][0][0], biggest[3][0][1]), (biggest[2][0][0], biggest[2][0][1]), (0, 255, 0), thickness)
@@ -63,17 +86,38 @@ def drawRectangle(img, biggest, thickness):
     return img
 
 def reorder(myPoints):
+    """
+    对四个点进行重新排序，使其顺序为左上角、右上角、左下角、右下角。
+
+    :param myPoints: 四个点的数组，形状为 (4, 2)。
+    :return: 重新排序后的点数组，形状为 (4, 1, 2)。
+    """
+    # 调整点数组的形状
     myPoints = myPoints.reshape((4, 2))
     myPointsNew = np.zeros((4, 1, 2), np.int32)
+    # 计算每个点的坐标和
     add = myPoints.sum(1)
+    # 左上角的点坐标和最小
     myPointsNew[0] = myPoints[np.argmin(add)]
+    # 右下角的点坐标和最大
     myPointsNew[3] = myPoints[np.argmax(add)]
+    # 计算每个点的坐标差
     diff = np.diff(myPoints, axis=1)
+    # 右上角的点坐标差最小
     myPointsNew[1] = myPoints[np.argmin(diff)]
+    # 左下角的点坐标差最大
     myPointsNew[2] = myPoints[np.argmax(diff)]
     return myPointsNew
 
 def stackImages(scale, imgArray, labels=[]):
+    """
+    将多个图像堆叠成一个大图像。
+
+    :param scale: 图像缩放比例。
+    :param imgArray: 图像数组，可以是二维列表或一维列表。
+    :param labels: 每个图像的标签列表，可选参数。
+    :return: 堆叠后的大图像。
+    """
     rows = len(imgArray)
     cols = len(imgArray[0])
     rowsAvailable = isinstance(imgArray[0], list)
@@ -83,28 +127,40 @@ def stackImages(scale, imgArray, labels=[]):
         for x in range(0, rows):
             for y in range(0, cols):
                 if imgArray[x][y].shape[:2] == imgArray[0][0].shape[:2]:
+                    # 缩放图像
                     imgArray[x][y] = cv.resize(imgArray[x][y], (0, 0), None, scale, scale)
                 else:
+                    # 调整图像大小
                     imgArray[x][y] = cv.resize(imgArray[x][y], (imgArray[0][0].shape[1], imgArray[0][0].shape[0]), None, scale, scale)
                 if len(imgArray[x][y].shape) == 2:
+                    # 将灰度图像转换为彩色图像
                     imgArray[x][y] = cv.cvtColor(imgArray[x][y], cv.COLOR_GRAY2BGR)
         imageBlank = np.zeros((height, width, 3), np.uint8)
         hor = [imageBlank] * rows
         hor_con = [imageBlank] * rows
         for x in range(0, rows):
+            # 水平堆叠图像
             hor[x] = np.hstack(imgArray[x])
+            # 水平连接图像
             hor_con[x] = np.concatenate(imgArray[x])
+        # 垂直堆叠图像
         ver = np.vstack(hor)
+        # 垂直连接图像
         ver_con = np.concatenate(hor)
     else:
         for x in range(0, rows):
             if imgArray[x].shape[:2] == imgArray[0].shape[:2]:
+                # 缩放图像
                 imgArray[x] = cv.resize(imgArray[x], (0, 0), None, scale, scale)
             else:
+                # 调整图像大小
                 imgArray[x] = cv.resize(imgArray[x], (imgArray[0].shape[1], imgArray[0].shape[0]), None, scale, scale)
             if len(imgArray[x].shape) == 2:
+                # 将灰度图像转换为彩色图像
                 imgArray[x] = cv.cvtColor(imgArray[x], cv.COLOR_GRAY2BGR)
+        # 水平堆叠图像
         hor = np.hstack(imgArray)
+        # 水平连接图像
         hor_con = np.concatenate(imgArray)
         ver = hor
     if len(labels) != 0:
@@ -112,32 +168,69 @@ def stackImages(scale, imgArray, labels=[]):
         eachImgHeight = int(ver.shape[0] / rows)
         for d in range(0, rows):
             for c in range(0, cols):
+                # 绘制标签背景
                 cv.rectangle(ver, (c*eachImgWidth, eachImgHeight*d), (c*eachImgWidth+len(labels[d][c])*13+27, 30+eachImgHeight*d), (255, 255, 255), cv.FILLED) 
                 cv.putText(ver, labels[d][c], (eachImgWidth*c+10, eachImgHeight*d+20), cv.FONT_HERSHEY_COMPLEX, 0.7, (255, 0, 255), 2)
     return ver
 
-def spiltboxs(img):
-    rows = np.vsplit(img, 7)
+def spiltboxs(img, ques=7, choice=5):
+    """
+    将输入的图像分割成多个小方块。
+
+    :param img: 输入的图像
+    :param ques: 问题的数量，默认为7
+    :param choice: 每个问题的选项数量，默认为5
+    :return: 分割后的小方块列表
+    """
+    # 垂直分割图像为ques行
+    rows = np.vsplit(img, ques)
+    # 初始化小方块列表
     boxes = []
+    # 遍历每一行
     for r in rows:
-        cols = np.hsplit(r, 5)
+        # 水平分割当前行图像为choice列
+        cols = np.hsplit(r, choice)
+        # 遍历每一列
         for box in cols:
+            # 将每个小方块添加到列表中
             boxes.append(box)
     return boxes
 
 def displayAnswers(img, myIndex, grading, ans, ques=7, choice=5):
+    """
+    在图像上显示答案和得分情况。
+
+    :param img: 要显示答案的图像
+    :param myIndex: 用户选择的答案索引列表
+    :param grading: 每个问题的得分情况列表
+    :param ans: 正确答案索引列表
+    :param ques: 问题的数量，默认为7
+    :param choice: 每个问题的选项数量，默认为5
+    :return: 显示了答案和得分情况的图像
+    """
+    # 计算每个选项的宽度
     sectionWidth = int(img.shape[1]/choice)
+    # 计算每个问题的高度
     sectionHeight = int(img.shape[0]/ques)
+    # 遍历每个问题
     for x in range(0, ques):
+        # 获取用户当前问题的选择
         myAns = myIndex[x]
+        # 计算用户选择的选项的中心点坐标
         cx, cy  = myAns * sectionWidth + sectionWidth//2, (x+1) * sectionHeight - sectionHeight//2
+        # 判断用户当前问题是否回答正确
         if grading[x] == 1:
+            # 回答正确，设置颜色为绿色
             myColor = (0, 255, 0)
+            # 在用户选择的选项中心绘制绿色填充圆
             cv.circle(img, (cx, cy), 25, myColor, cv.FILLED)
         else:
+            # 回答错误，设置颜色为红色
             myColor = (0, 0, 255)
+            # 获取正确答案
             rightAns = ans[x]
+            # 在用户选择的选项中心绘制红色填充圆
             cv.circle(img, (cx, cy), 25, myColor, cv.FILLED)
+            # 在正确答案的选项中心绘制绿色填充圆
             cv.circle(img, ((rightAns * sectionWidth + sectionWidth//2), (x+1) * sectionHeight - sectionHeight//2), 10, (0, 255, 0), cv.FILLED)
-            
     return img

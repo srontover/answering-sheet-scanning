@@ -80,17 +80,17 @@ while True:
         img_warpColored = cv.warpPerspective(img, matrix, (width, height))
         img_warpColored = img_warpColored[20:img_warpColored.shape[0] - 20, 20:img_warpColored.shape[1] - 20]
         img_warpColored = cv.resize(img_warpColored, (width, height))
-        img_contours2 = img_warpColored.copy()
         
         
         
-
+        
+        img_warp_rio = img_warpColored[120:580, 120:442]
+        img_warp_rio = cv.resize(img_warp_rio, (490,490))
         img_warpGray = cv.cvtColor(img_warpColored, cv.COLOR_BGR2GRAY)
         thres_warp = result["threshold2"]
         img_warpthres = cv.threshold(img_warpGray, thres_warp[0], 255, cv.THRESH_BINARY_INV)[1]
         
-        imgs = ([img, img_gray, img_thres, img_contours],
-            [img_big_contour, img_warpColored, img_warpGray, img_warpthres])
+        
         
         
         # print(img_warp_canny.shape)
@@ -136,12 +136,21 @@ while True:
         # cv.imshow("test", img_warp_thres_rio)
         # cv.imshow("test", boxs[0])
         
-            
+        img_result = img_warp_rio.copy()
+        img_result = sf.displayAnswers(img_result, myIndex, grade, ans, ques, choice)
+        
+        
+        imgs = ([img, img_gray, img_thres, img_contours],
+            [img_big_contour, img_warpColored, img_warpGray, img_warpthres],
+            [img_result, img_blank, img_blank, img_blank])    
            
     else:
-        imgs = ([img, img_gray, img_thres, img_contours],[img_blank, img_blank, img_blank, img_blank])
+        imgs = ([img, img_gray, img_thres, img_contours],
+            [img_blank, img_blank, img_blank, img_blank], 
+            [img_blank, img_blank, img_blank, img_blank])
     labels = [["oringinal", "gray", "thres", "contours"], 
-                   ["biggest", "warp colored", "warp gray", "warp thres"]]
+            ["biggest", "warp colored", "warp gray", "warp thres"],
+            ["result", "blank", "blank", "blank"]]
     stackedImages = sf.stackImages(0.5, imgs, labels)
     
             

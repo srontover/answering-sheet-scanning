@@ -124,3 +124,20 @@ def spiltboxs(img):
         for box in cols:
             boxes.append(box)
     return boxes
+
+def displayAnswers(img, myIndex, grading, ans, ques=7, choice=5):
+    sectionWidth = int(img.shape[1]/choice)
+    sectionHeight = int(img.shape[0]/ques)
+    for x in range(0, ques):
+        myAns = myIndex[x]
+        cx, cy  = myAns * sectionWidth + sectionWidth//2, (x+1) * sectionHeight - sectionHeight//2
+        if grading[x] == 1:
+            myColor = (0, 255, 0)
+            cv.circle(img, (cx, cy), 25, myColor, cv.FILLED)
+        else:
+            myColor = (0, 0, 255)
+            rightAns = ans[x]
+            cv.circle(img, (cx, cy), 25, myColor, cv.FILLED)
+            cv.circle(img, ((rightAns * sectionWidth + sectionWidth//2), (x+1) * sectionHeight - sectionHeight//2), 25, (0, 255, 0), cv.FILLED)
+            
+    return img

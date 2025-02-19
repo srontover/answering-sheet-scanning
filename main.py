@@ -3,7 +3,7 @@ import numpy as np
 import scanFunctions as sf
 
 ################################
-path = "2.jpg"
+path = "test.jpg"
 Webcam = False
 height = 640
 width = 480
@@ -36,6 +36,7 @@ window_info_result = [
 ques = 7
 choice = 5
 ans = [1,1,1,1,1,1,1]
+ans_limit = 2000
 #################################
 
 
@@ -120,7 +121,10 @@ while True:
         for x in range(0, ques):
             arr = myPixelVal[x]
             myIndexVal = np.where(arr == np.amax(arr))
-            myIndex.append(myIndexVal[0][0])
+            if arr[myIndexVal[0][0]] > ans_limit:
+                myIndex.append(myIndexVal[0][0])
+            else:
+                myIndex.append(-1)
         # print(myIndex)
         
         grade = []
@@ -138,7 +142,7 @@ while True:
         
         img_result = img_warp_rio.copy()
         img_result = sf.displayAnswers(img_result, myIndex, grade, ans, ques, choice)
-        
+        cv.imshow("result", img_result)
         
         imgs = ([img, img_gray, img_thres, img_contours],
             [img_big_contour, img_warpColored, img_warpGray, img_warpthres],

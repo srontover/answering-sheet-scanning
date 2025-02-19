@@ -138,6 +138,6 @@ def displayAnswers(img, myIndex, grading, ans, ques=7, choice=5):
             myColor = (0, 0, 255)
             rightAns = ans[x]
             cv.circle(img, (cx, cy), 25, myColor, cv.FILLED)
-            cv.circle(img, ((rightAns * sectionWidth + sectionWidth//2), (x+1) * sectionHeight - sectionHeight//2), 25, (0, 255, 0), cv.FILLED)
+            cv.circle(img, ((rightAns * sectionWidth + sectionWidth//2), (x+1) * sectionHeight - sectionHeight//2), 10, (0, 255, 0), cv.FILLED)
             
     return img
